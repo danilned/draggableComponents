@@ -7,21 +7,43 @@ const app = new Vue({
       height: 13,
       components: [
         {
-          size: null,
+          w: null,
+          h: null,
           left: null,
           top: null,
-          x: 22,
+          x: 0,
           y: 0,
           width: 4,
           height: 4,
         },
         {
-          size: null,
+          w: null,
+          h: null,
           left: null,
           top: null,
-          x: 22,
-          y: 4,
+          x: 4,
+          y: 0,
           width: 4,
+          height: 4,
+        },
+        {
+          w: null,
+          h: null,
+          left: null,
+          top: null,
+          x: 8,
+          y: 0,
+          width: 4,
+          height: 4,
+        },
+        {
+          w: null,
+          h: null,
+          left: null,
+          top: null,
+          x: 0,
+          y: 4,
+          width: 12,
           height: 4,
         },
       ],
@@ -44,7 +66,14 @@ const app = new Vue({
       const xRes = this.components[index].x + x;
 
       if (xRes < 0 || xRes + this.components[index].width > this.width) return;
-      this.checkCross(xRes, this.components[index].y, index).forEach((cur) => {
+
+      const arr = this.sortByAxis(
+        this.checkCross(xRes, this.components[index].y, index),
+        x,
+        "y"
+      );
+
+      arr.forEach((cur) => {
         if (x >= 0) {
           if (
             this.components[cur].width + this.components[cur].x + x >
@@ -71,7 +100,14 @@ const app = new Vue({
 
       if (yRes < 0 || yRes + this.components[index].height > this.height)
         return;
-      this.checkCross(this.components[index].x, yRes, index).forEach((cur) => {
+
+      const arr = this.sortByAxis(
+        this.checkCross(this.components[index].x, yRes, index),
+        y,
+        "x"
+      );
+
+      arr.forEach((cur) => {
         if (y >= 0) {
           if (
             this.components[cur].y + this.components[cur].height + y >
@@ -98,12 +134,9 @@ const app = new Vue({
 
       if (odd + this.components[cur].y < 0) {
         return this.moveY(
-          Math.abs(
-            this.components[index].y -
-              this.components[cur].y -
-              this.components[index].height -
-              this.components[cur].height
-          ),
+          this.components[index].y -
+            this.components[cur].y +
+            this.components[index].height,
           cur
         );
       }
@@ -112,10 +145,20 @@ const app = new Vue({
         odd + this.components[cur].y + this.components[cur].height >
         this.height
       ) {
+        if (this.components[index].height > this.components[cur].height) {
+          return this.moveX(
+            -Math.abs(
+              this.components[cur].y -
+                this.components[index].y +
+                this.components[cur].height
+            ),
+            cur
+          );
+        }
         return this.moveY(
           -Math.abs(
-            this.components[index].height -
-              (this.components[index].y - this.components[cur].y)
+            Math.abs(this.components[index].y - this.components[cur].y) +
+              this.components[cur].height
           ),
           cur
         );
@@ -128,12 +171,9 @@ const app = new Vue({
 
       if (odd + this.components[cur].x < 0) {
         return this.moveX(
-          Math.abs(
-            this.components[index].x -
-              this.components[cur].x -
-              this.components[index].width -
-              this.components[cur].width
-          ),
+          this.components[index].x -
+            this.components[cur].x +
+            this.components[index].width,
           cur
         );
       }
@@ -142,10 +182,20 @@ const app = new Vue({
         odd + this.components[cur].x + this.components[cur].width >
         this.width
       ) {
+        if (this.components[index].width > this.components[cur].width) {
+          return this.moveX(
+            -Math.abs(
+              this.components[cur].x -
+                this.components[index].x +
+                this.components[cur].width
+            ),
+            cur
+          );
+        }
         return this.moveX(
           -Math.abs(
-            this.components[index].width -
-              (this.components[index].x - this.components[cur].x)
+            Math.abs(this.components[index].x - this.components[cur].x) +
+              this.components[cur].width
           ),
           cur
         );
@@ -155,10 +205,9 @@ const app = new Vue({
     },
     getOdd(cur, index, axis, par) {
       if (this.components[cur][axis] < this.components[index][axis]) {
-        return (
-          this.components[index][axis] -
-          this.components[cur][axis] -
-          this.components[index][par]
+        return -(
+          this.components[cur][par] -
+          (this.components[index][axis] - this.components[cur][axis])
         );
       }
       return (
@@ -203,6 +252,16 @@ const app = new Vue({
       }
       return false;
     },
+    sortByAxis(arr, int, axis) {
+      if (int >= 0) {
+        return arr.sort((a, b) => {
+          return this.components[b][axis] - this.components[a][axis];
+        });
+      }
+      return arr.sort((a, b) => {
+        return this.components[a][axis] - this.components[b][axis];
+      });
+    },
   },
   mounted() {
     let setWindowWidth = Math.floor(
@@ -223,7 +282,8 @@ const app = new Vue({
     this.components = this.components.map((cur) => {
       return {
         ...cur,
-        size: cur.width * this.size,
+        w: cur.width * this.size,
+        h: cur.height * this.size,
         left: cur.x * this.size,
         top: cur.y * this.size,
       };
